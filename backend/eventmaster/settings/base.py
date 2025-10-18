@@ -37,9 +37,8 @@ INSTALLED_APPS = [
     
     # Local apps
     'apps.events',
-    'apps.sessions',
+    'apps.session_manager',
     'apps.tracks',
-    'apps.attendees',
     'apps.users',
 ]
 
