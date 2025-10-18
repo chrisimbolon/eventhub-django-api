@@ -1,4 +1,4 @@
-# project/settings/development.py
+# eventmaster/settings/development.py
 from .base import *
 
 DEBUG = True
