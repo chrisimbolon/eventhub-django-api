@@ -39,7 +39,7 @@ class TrackSerializer(serializers.ModelSerializer):
 
 class TrackDetailSerializer(serializers.ModelSerializer):
     """Detailed track serializer with sessions"""
-    from apps.sessions.serializers import SessionListSerializer
+    from apps.session_manager.serializers import SessionListSerializer
     
     sessions = SessionListSerializer(many=True, read_only=True)
     session_count = serializers.IntegerField(read_only=True)
