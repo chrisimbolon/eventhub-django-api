@@ -117,7 +117,9 @@ class Command(BaseCommand):
             )
             attendees.append(attendee)
 
-        self.stdout.write(self.style.SUCCESS(f'✅ Created {13 + len(attendees)} users'))
+        # Count actual users created: 2 organizers + 3 speakers + attendees
+        total_users = 2 + 3 + len(attendees)
+        self.stdout.write(self.style.SUCCESS(f'✅ Created {total_users} users'))
 
         # Create Events
         self.stdout.write('Creating events...')

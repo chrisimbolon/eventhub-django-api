@@ -1,3 +1,5 @@
+# backend/apps/events/serializers.py
+
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import Event, Registration
@@ -118,12 +120,13 @@ class EventCreateUpdateSerializer(serializers.ModelSerializer):
         return data
 
 
+
 class RegistrationSerializer(serializers.ModelSerializer):
     """Serializer for registration"""
     attendee_name = serializers.CharField(source='attendee.get_full_name', read_only=True)
     attendee_email = serializers.CharField(source='attendee.email', read_only=True)
     event_title = serializers.CharField(source='event.title', read_only=True)
-    
+
     class Meta:
         model = Registration
         fields = [
@@ -136,29 +139,37 @@ class RegistrationSerializer(serializers.ModelSerializer):
             'id', 'attendee', 'registration_date', 'confirmation_date',
             'created_at', 'updated_at'
         ]
-    
+
     def validate(self, data):
-        """Validate registration"""
+        """Validate registration rules"""
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
         event = data.get('event')
-        
-        # Check if event is full
+
+        if not user or not user.is_authenticated:
+            raise serializers.ValidationError({'attendee': 'Authentication required.'})
+
+        #  Check role
+        if user.role != 'attendee':
+            raise serializers.ValidationError({'attendee': 'Only attendees can register for events.'})
+
+        #  Check duplicates
+        if Registration.objects.filter(event=event, attendee=user).exists():
+            raise serializers.ValidationError({'event': 'You are already registered for this event.'})
+
+        #  Check event status
         if event.is_full:
-            raise serializers.ValidationError({
-                'event': 'This event has reached maximum capacity'
-            })
-        
-        # Check if registration is open
+            raise serializers.ValidationError({'event': 'This event has reached maximum capacity.'})
+
         if not event.is_registration_open:
-            raise serializers.ValidationError({
-                'event': 'Registration is not currently open for this event'
-            })
-        
+            raise serializers.ValidationError({'event': 'Registration is not currently open for this event.'})
+
         return data
-    
+
     def create(self, validated_data):
-        """Create registration with current user"""
         validated_data['attendee'] = self.context['request'].user
         return super().create(validated_data)
+
 
 
 class RegistrationDetailSerializer(serializers.ModelSerializer):
