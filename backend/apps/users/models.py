@@ -9,17 +9,17 @@ class User(AbstractUser):
     Custom User model - can be attendee, organizer, or speaker
     """
     ROLE_CHOICES = [
-        ('attendee', 'Attendee'),      # ← Regular user attending events
-        ('organizer', 'Organizer'),    # ← User organizing events
-        ('speaker', 'Speaker'),        # ← User speaking at events
-        ('admin', 'Admin'),            # ← System admin
+        ('attendee', 'Attendee'),      
+        ('organizer', 'Organizer'),    
+        ('speaker', 'Speaker'),        
+        ('admin', 'Admin'),            
     ]
     
-    # The role field determines what they can do!
+    
     role = models.CharField(
         max_length=20,
         choices=ROLE_CHOICES,
-        default='attendee'  # ← Most users are attendees!
+        default='attendee'  
     )
     
     phone = models.CharField(max_length=20, blank=True)
