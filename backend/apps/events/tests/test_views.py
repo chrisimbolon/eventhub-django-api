@@ -63,12 +63,6 @@ class TestEventViewSet:
         assert len(results) >= 1
         assert "title" in results[0]
 
-    # def test_list_events(self, api_client, sample_event):
-    #     response = api_client.get("/api/v1/events/")
-    #     assert response.status_code == status.HTTP_200_OK
-    #     assert len(response.data) >= 1
-    #     assert "title" in response.data[0]
-
     def test_create_event_requires_authentication(self, api_client):
         payload = {"title": "Unauth Event", "slug": "unauth-event"}
         response = api_client.post("/api/v1/events/", payload)
@@ -98,28 +92,6 @@ class TestEventViewSet:
         event = Event.objects.get(slug="organizer-event")
         assert event.organizer == organizer
 
-    # def test_create_event_success(self, api_client, organizer):
-    #     api_client.force_authenticate(user=organizer)
-    #     now = timezone.now()
-    #     payload = {
-    #         "title": "Organizer Event",
-    #         "slug": "organizer-event",
-    #         "description": "Organized by test user",
-    #         "event_type": "conference",
-    #         "status": "draft",
-    #         "start_date": (now + timedelta(days=5)).isoformat(),
-    #         "end_date": (now + timedelta(days=7)).isoformat(),
-    #         "registration_start": (now - timedelta(days=1)).isoformat(),
-    #         "registration_end": (now + timedelta(days=3)).isoformat(),
-    #         "venue_name": "Main Hall",
-    #         "venue_address": "123 Avenue",
-    #         "city": "Metropolis",
-    #         "country": "Freedonia",
-    #         "capacity": 200,
-    #     }
-    #     response = api_client.post("/api/v1/events/", payload, format="json")
-    #     assert response.status_code == status.HTTP_201_CREATED
-    #     assert response.data["organizer"] == organizer.id or "id" in response.data
 
     def test_update_event_as_organizer(self, api_client, organizer, sample_event):
         api_client.force_authenticate(user=organizer)
