@@ -5,8 +5,6 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework.test import APIClient
 from rest_framework import status
-
-# FIX: Changed import from 'apps.sessions' to the correct app name: 'apps.session_manager'
 from apps.session_manager.models import Session, Speaker 
 from apps.events.models import Event
 from apps.tracks.models import Track
@@ -62,8 +60,6 @@ class TestSessionViewSet:
     
     @pytest.fixture
     def track(self, event):
-        # NOTE: If Track is in the 'events' app, the import is wrong here. 
-        # Assuming for this fix that Track is still correctly accessible via the setup environment.
         return Track.objects.create(
             event=event,
             name='Backend Track',
