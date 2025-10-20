@@ -5,6 +5,7 @@ from datetime import timedelta
 from django.utils import timezone
 from apps.events.models import Event, Registration
 from apps.users.models import User
+from types import SimpleNamespace
 from apps.events.serializers import (
 EventCreateUpdateSerializer,
 EventListSerializer,
@@ -84,7 +85,7 @@ class TestEventSerializers:
         assert "title" in data
         assert "slug" in data
         assert "start_date" in data
-        assert "organizer" in data
+        assert "organizer_name" in data
 
     def test_detail_serializer_includes_related_data(self, organizer):
         event = Event.objects.create(
@@ -109,7 +110,14 @@ class TestEventSerializers:
         data = serializer.data
         assert data["slug"] == event.slug
         assert data["venue_name"] == "Innovation Hub"
-        assert data["organizer"]["username"] == "organizer"
+        assert "organizer" in data
+        organizer_data = data["organizer"]
+        assert isinstance(organizer_data, dict)
+        assert organizer_data["email"] == "organizer@test.com"
+        assert organizer_data["id"] == organizer.id
+        assert "name" in organizer_data  # optional field (can be blank)
+
+
 
 @pytest.mark.django_db
 class TestRegistrationSerializer:
@@ -153,12 +161,11 @@ class TestRegistrationSerializer:
             capacity=100,
             organizer=organizer,
         )
-
+    
     def test_valid_registration(self, attendee, event):
         data = {"event": event.id}
-        serializer = RegistrationSerializer(
-            data=data, context={"request": None}
-        )
+        fake_request = SimpleNamespace(user=attendee)
+        serializer = RegistrationSerializer(data=data, context={"request": fake_request})
         assert serializer.is_valid(), serializer.errors
         reg = serializer.save(attendee=attendee)
         assert reg.event == event
