@@ -9,7 +9,8 @@ from datetime import timedelta
 # General
 # -------------------------------------
 DEBUG = False
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+# ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "eventhub.localhost", "backend"]
 
 # -------------------------------------
 # Security
@@ -53,6 +54,22 @@ CORS_ALLOWED_ORIGINS = os.getenv(
     "CORS_ALLOWED_ORIGINS",
     "https://eventhub.app,https://api.eventhub.app"
 ).split(",")
+
+
+# Trust X-Forwarded headers from Caddy
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Enable HTTPS redirect and secure cookies
+SECURE_SSL_REDIRECT = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
+# CSRF trusted origins (important for HTTPS)
+CSRF_TRUSTED_ORIGINS = [
+    "https://eventhub.localhost",
+]
+
 
 # -------------------------------------
 # REST Framework + JWT
