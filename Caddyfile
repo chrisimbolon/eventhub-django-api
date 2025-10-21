@@ -1,0 +1,14 @@
+{
+  log
+}
+
+eventhub.localhost {
+    tls internal
+
+    # Backend (Django) routes
+    @api path /api/* /api/docs/* /admin* /static/* /media/*
+    reverse_proxy @api backend:8000
+
+    # Frontend (Vite + React)
+    reverse_proxy frontend:5173
+}
