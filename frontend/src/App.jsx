@@ -1,20 +1,42 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AppLayout } from "./components/layout/AppLayout";
-import EventsPage from "./pages/EventsPage";
+// src/App.js
 
-function App() {
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Navbar from "./components/layout/Navbar";
+import Sidebar from "./components/layout/Sidebar";
+import Footer from "./components/layout/Footer";
+import Home from "./pages/Home";
+import EventsPage from "./pages/EventsPage";
+import EventDetailPage from "./pages/EventDetailPage";
+import AuthPage from "./pages/AuthPage";
+import AdminPage from "./pages/AdminPage";
+import CreateEvent from "./pages/CreateEvent";
+import { useAuth } from "./hooks/useAuth";
+
+export default function App() {
+  const { user } = useAuth();
+
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<div>Dashboard (coming soon)</div>} />
-          <Route path="/events" element={<EventsPage />} />
-          <Route path="/sessions" element={<div>Sessions Page</div>} />
-          <Route path="/attendees" element={<div>Attendees Page</div>} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <div className="min-h-screen bg-gray-50 text-slate-900">
+      <Navbar />
+      <div className="flex">
+        <Sidebar />
+        <main className="flex-1 p-6">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/events" element={<EventsPage />} />
+            <Route path="/events/:id" element={<EventDetailPage />} />
+            <Route
+              path="/admin/*"
+              element={user?.is_admin ? <AdminPage /> : <Navigate to="/" replace />}
+            />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/create-event" element={<CreateEvent />} />
+            <Route path="*" element={<div>Not Found</div>} />
+          </Routes>
+        </main>
+      </div>
+      <Footer />
+    </div>
   );
 }
-
-export default App;
