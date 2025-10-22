@@ -19,9 +19,9 @@ class UserSerializer(serializers.ModelSerializer):
             'id', 'username', 'email', 'first_name', 'last_name',
             'full_name', 'role', 'phone', 'bio', 'company', 'job_title',
             'website', 'linkedin', 'twitter', 'github', 'avatar',
-            'date_joined', 'email_verified'
+            'date_joined'
         ]
-        read_only_fields = ['id', 'date_joined', 'email_verified']
+        read_only_fields = ['id', 'date_joined']
     
     def get_full_name(self, obj):
         return obj.get_full_name()
@@ -83,9 +83,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'id', 'username', 'email', 'first_name', 'last_name',
             'full_name', 'role', 'phone', 'bio', 'company', 'job_title',
             'website', 'linkedin', 'twitter', 'github', 'avatar',
-            'date_joined', 'email_verified', 'events_organized', 'events_registered'
+            'date_joined', 'events_organized', 'events_registered'
         ]
-        read_only_fields = ['id', 'username', 'email', 'date_joined', 'email_verified']
+        read_only_fields = ['id', 'username', 'email', 'date_joined']
     
     def get_full_name(self, obj):
         return obj.get_full_name()

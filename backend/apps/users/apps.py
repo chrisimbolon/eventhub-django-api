@@ -10,8 +10,6 @@ class UsersConfig(AppConfig):
     
     def ready(self):
         """
-        Import signals when app is ready
+        Import signals placeholder
         """
-        # If you add signals later, import them here
-        # import apps.users.signals
         pass
