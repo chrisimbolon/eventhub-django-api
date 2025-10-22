@@ -26,7 +26,7 @@ export default function AuthPage() {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    // Clear error for this field
+    
     if (errors[e.target.name]) {
       setErrors({ ...errors, [e.target.name]: "" });
     }
