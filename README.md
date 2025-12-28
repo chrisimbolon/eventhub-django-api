@@ -327,7 +327,6 @@ eventhub-api/
 │   │   ├── events/          # Event management
 │   │   ├── sessions/        # Session management
 │   │   ├── tracks/          # Track management
-│   │   ├── attendees/       # Attendee management
 │   │   └── users/           # User authentication
 │   ├── eventmaster/
 │   │   ├── settings/        # Split settings
