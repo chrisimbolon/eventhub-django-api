@@ -23,49 +23,39 @@ jobs:
       - name: Deploy EventHub
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-set -e
+          set -e
 
-echo "🔹 Navigating to EventHub directory..."
-cd /home/apps/eventhub || { echo "❌ Directory not found"; exit 1; }
+          echo "🔹 Navigating to EventHub directory..."
+          cd /home/apps/eventhub || { echo "❌ Directory not found"; exit 1; }
 
-echo "🔹 Pulling latest code..."
-git pull origin main
+          echo "🔹 Pulling latest code..."
+          git pull origin main
 
-echo "🔹 Writing .env file..."
-cat << 'RAW_ENV' | sed 's/^            //' > .env
-            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-            POSTGRES_HOST=eventhub_db
-            POSTGRES_PORT=5432
-            SECRET_KEY=${{ secrets.SECRET_KEY }}
-            DJANGO_SETTINGS_MODULE=eventmaster.settings.production
-            ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
-            CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS }}
-            CSRF_TRUSTED_ORIGINS=${{ secrets.CSRF_TRUSTED_ORIGINS }}
-            DEBUG=False
-RAW_ENV
+          echo "🔹 Writing .env file..."
+          cat <<EOF_ENV > .env
+          
+          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_HOST=eventhub_db
+          POSTGRES_PORT=5432
+          SECRET_KEY=${{ secrets.SECRET_KEY }}
+          DJANGO_SETTINGS_MODULE=eventmaster.settings.production
+          ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
+          CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS }}
+          CSRF_TRUSTED_ORIGINS=${{ secrets.CSRF_TRUSTED_ORIGINS }}
+          DEBUG=False
+          EOF_ENV
 
-echo "🔹 Restarting containers..."
-docker compose down
-docker compose up -d --build
+          echo "🔹 Restarting containers..."
+          docker compose down
+          docker compose up -d --build
 
-echo "🔹 Running migrations..."
-docker compose exec -T backend python manage.py migrate --noinput
+          echo "🔹 Running migrations..."
+          docker compose exec -T backend python manage.py migrate --noinput
 
-echo "🔹 Collecting static files..."
-docker compose exec -T backend python manage.py collectstatic --noinput
+          echo "🔹 Collecting static files..."
+          docker compose exec -T backend python manage.py collectstatic --noinput
 
-echo "🔹 Health check..."
-for i in {1..10}; do
-  curl -f https://eventhub.chrisimbolon.dev && break
-  echo "⏳ Waiting for app..."
-  sleep 5
-done
-
-echo "🔹 Cleaning up unused images..."
-docker image prune -af || true
-
-echo "✅ EventHub deployment completed successfully!"
-echo "🌐 Live at: https://eventhub.chrisimbolon.dev"
-EOF
+          echo "✅ EventHub deployment completed successfully!"
+          EOF
