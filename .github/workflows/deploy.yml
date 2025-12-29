@@ -20,10 +20,16 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-            - name: Deploy EventHub
+      - name: Deploy EventHub
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<'EOF'
             set -e
+
+            echo "🔹 Navigating to EventHub directory..."
+            cd /home/apps/eventhub || { echo "❌ Directory not found"; exit 1; }
+
+            echo "🔹 Pulling latest code..."
+            git pull origin main
 
             echo "🔹 Writing .env file..."
             cat > .env <<EOL
@@ -39,7 +45,6 @@ jobs:
             CSRF_TRUSTED_ORIGINS=https://eventhub.chrisimbolon.dev
             DEBUG=False
             EOL
-          EOF
 
             echo "🔹 Stopping existing containers..."
             docker compose down
@@ -52,10 +57,6 @@ jobs:
 
             echo "🔹 Collecting static files..."
             docker compose exec -T backend python manage.py collectstatic --noinput
-
-            # 🔹 Optional: connect to Caddy network if needed
-            # docker network connect caddy-net eventhub-backend || true
-            # docker network connect caddy-net eventhub-nginx || true
 
             echo "🔹 Waiting for service to be ready..."
             for i in {1..10}; do
