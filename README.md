@@ -420,23 +420,7 @@ eventhub-api/
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📝 Environment Variables
 
-```bash
-# Django
-SECRET_KEY=your-secret-key
-DEBUG=False
-ALLOWED_HOSTS=your-domain.com
-DJANGO_SETTINGS_MODULE=eventmaster.settings.production
-
-# Database
-POSTGRES_DB=eventhub_db
-POSTGRES_USER=eventhub
-POSTGRES_PASSWORD=eventhub_pass
-POSTGRES_HOST=db
-POSTGRES_PORT=5432
-
-```
 
 ## 🔧 Troubleshooting
 
