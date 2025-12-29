@@ -1,0 +1,69 @@
+services:
+  db:
+    image: postgres:16
+    container_name: eventhub_db
+    env_file:
+      - .env  
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - eventhub-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: eventhub_backend
+    command: >
+      bash -c "
+        echo 'Waiting for database...' &&
+        until nc -z db 5432; do sleep 1; done &&
+        echo 'Database ready!' &&
+        python manage.py migrate &&
+        python manage.py collectstatic --noinput &&
+        echo 'Starting Gunicorn...' &&
+        exec gunicorn eventmaster.wsgi:application \
+          --bind 0.0.0.0:8000 \
+          --workers 2 \
+          --log-level debug \
+          --forwarded-allow-ips='*'
+      "
+    env_file:
+      - .env
+    environment:
+      - GUNICORN_CMD_ARGS=--bind=0.0.0.0:8000
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    ports:          # ✅ Added for dev
+      - "8000:8000"
+    networks:
+      - eventhub-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: eventhub_frontend
+    command: npm run dev -- --host
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:          # ✅ Added for dev
+      - "5173:5173"
+    networks:
+      - eventhub-net
+
+networks:
+  eventhub-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
