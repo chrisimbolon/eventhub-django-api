@@ -32,8 +32,7 @@ jobs:
           git pull origin main
 
           echo "🔹 Writing .env file..."
-          cat <<EOF_ENV > .env
-          
+          cat <<EOF_ENV > .env          
           POSTGRES_DB=${{ secrets.POSTGRES_DB }}
           POSTGRES_USER=${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
