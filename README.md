@@ -2,7 +2,7 @@
 
 A comprehensive Event Management API built with Django REST Framework for managing technical conferences, sessions, speakers, and attendee registrations.
 
-Caddy + Docker + Django + React — fully HTTPS and modular-monolith
+Caddy + Docker + Django + React — fully HTTPS and modular-monolith (services run on single server)
 
 ## 📋 Table of Contents
 
