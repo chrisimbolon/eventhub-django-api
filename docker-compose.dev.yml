@@ -3,7 +3,7 @@ services:
     image: postgres:16
     container_name: eventhub_db
     env_file:
-      - .env  
+      - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -19,30 +19,15 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: eventhub_backend
-    command: >
-      bash -c "
-        echo 'Waiting for database...' &&
-        until nc -z db 5432; do sleep 1; done &&
-        echo 'Database ready!' &&
-        python manage.py migrate &&
-        python manage.py collectstatic --noinput &&
-        echo 'Starting Gunicorn...' &&
-        exec gunicorn eventmaster.wsgi:application \
-          --bind 0.0.0.0:8000 \
-          --workers 2 \
-          --log-level debug \
-          --forwarded-allow-ips='*'
-      "
+    command: gunicorn eventmaster.wsgi:application --bind 0.0.0.0:8000 --workers 2 --log-level debug --forwarded-allow-ips='*'
     env_file:
       - .env
-    environment:
-      - GUNICORN_CMD_ARGS=--bind=0.0.0.0:8000
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - ./backend:/app
-    ports:          # ✅ Added for dev
+    ports:
       - "8000:8000"
     networks:
       - eventhub-net
@@ -56,8 +41,8 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    ports:          # ✅ Added for dev
-      - "5173:5173"
+    ports:
+      - "5173:5173"  # Direct access for local dev
     networks:
       - eventhub-net
 
