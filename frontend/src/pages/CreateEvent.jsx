@@ -108,9 +108,15 @@ export default function CreateEvent() {
 
       {/* Header - FIXED gradient text clipping */}
       <div className="mb-8">
-        <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent leading-tight pb-2">
-          Create New Event
-        </h1>
+        <h1 className="
+  text-5xl font-extrabold mb-4
+  bg-gradient-to-r from-primary via-purple-500 to-accent
+  bg-clip-text text-transparent
+  drop-shadow-[0_4px_20px_rgba(99,102,241,0.35)]
+">
+  Create New Event
+</h1>
+    
         <p className="text-lg text-muted-foreground">
           Fill in the details to create a new technical conference
         </p>
