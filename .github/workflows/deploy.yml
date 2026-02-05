@@ -47,7 +47,14 @@ jobs:
           EOF_ENV
 
           echo "🔹 Restarting containers..."
-          docker compose down
+          docker compose down --remove-orphans || true
+
+          echo "🔹 Removing dangling containers..."
+          docker rm -f eventhub_backend eventhub_frontend eventhub_db || true
+
+          echo "🔹 Cleaning unused networks..."
+          docker network prune -f
+
           docker compose up -d --build
 
           echo "🔹 Running migrations..."

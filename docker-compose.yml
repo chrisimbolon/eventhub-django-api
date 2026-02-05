@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   db:
     image: postgres:16
@@ -17,23 +19,50 @@ services:
   backend:
     build:
       context: ./backend
+      dockerfile: Dockerfile
     container_name: eventhub_backend
     command: >
-      gunicorn eventmaster.wsgi:application
-      --bind 0.0.0.0:8000
-      --workers 3
-      --log-level info
-      --forwarded-allow-ips='*'
+      bash -c "
+        echo 'Waiting for database...' &&
+        until nc -z db 5432; do sleep 1; done &&
+        echo 'Database ready!' &&
+        python manage.py migrate &&
+        python manage.py collectstatic --noinput &&
+        echo 'Starting Gunicorn...' &&
+        exec gunicorn eventmaster.wsgi:application \
+          --bind 0.0.0.0:8000 \
+          --workers 2 \
+          --log-level debug \
+          --reload \
+          --forwarded-allow-ips='*'
+      "
     env_file:
       - .env
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - ./backend:/app
+    networks:
+      - eventhub-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: eventhub_frontend
+    command: npm run dev -- --host
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:              # CHANGED: Use ports instead of expose
+      - "5173:5173"
     networks:
       - eventhub-net
 
 networks:
   eventhub-net:
+    driver: bridge
 
 volumes:
   postgres_data:
