@@ -33,6 +33,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
+/* ---------------------------------- */
+/* Helpers                            */
+/* ---------------------------------- */
+
+// Convert WIB date + time → UTC ISO string
+function wibToUtcISOString(date, time) {
+  const [hour, minute] = time.split(":").map(Number);
+
+  const wibDate = new Date(date);
+  wibDate.setHours(hour, minute, 0, 0);
+
+  // WIB = UTC+7
+  wibDate.setHours(wibDate.getHours() - 7);
+
+  return wibDate.toISOString();
+}
+
 export default function CreateEvent() {
   const navigate = useNavigate();
 
@@ -55,7 +72,6 @@ export default function CreateEvent() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Time options
   const hours = Array.from({ length: 24 }, (_, i) =>
     String(i).padStart(2, "0")
   );
@@ -67,7 +83,7 @@ export default function CreateEvent() {
     if (!date) {
       toast({
         title: "Missing date",
-        description: "Please select a valid start date.",
+        description: "Please select a valid event date.",
         variant: "destructive",
       });
       return;
@@ -76,25 +92,44 @@ export default function CreateEvent() {
     const startTime = `${formData.startHour}:${formData.startMinute}`;
     const endTime = `${formData.endHour}:${formData.endMinute}`;
 
+    const startUTC = wibToUtcISOString(date, startTime);
+    const endUTC = wibToUtcISOString(date, endTime);
+
+    // 🔒 Validation
+    if (new Date(endUTC) <= new Date(startUTC)) {
+      toast({
+        title: "Invalid time",
+        description: "End time must be after start time.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // ✅ FIXED: Registration window
+    // Opens NOW, closes 1 hour before event starts
+    const registrationStartUTC = new Date().toISOString();
+    const registrationEndUTC = new Date(
+      new Date(startUTC).getTime() - 60 * 60 * 1000
+    ).toISOString();
+
     const payload = {
       title: formData.title,
       slug: formData.title.toLowerCase().replace(/\s+/g, "-"),
       description: formData.description,
-      start_date: new Date(
-        `${format(date, "yyyy-MM-dd")}T${startTime}:00Z`
-      ).toISOString(),
-      end_date: new Date(
-        `${format(date, "yyyy-MM-dd")}T${endTime}:00Z`
-      ).toISOString(),
-      registration_start: new Date().toISOString(),
-      registration_end: new Date(
-        `${format(date, "yyyy-MM-dd")}T00:00:00Z`
-      ).toISOString(),
+
+      status: "published",
+
+      start_date: startUTC,
+      end_date: endUTC,
+      registration_start: registrationStartUTC,  // ✅ Opens NOW
+      registration_end: registrationEndUTC,      // ✅ Closes 1hr before event
+
       venue_name: formData.venue,
       venue_address: formData.address,
-      city: "San Francisco",
-      country: "United States",
+      city: "Jambi",
+      country: "Indonesia",
       capacity: parseInt(formData.capacity, 10),
+      timezone: "Asia/Jakarta",
     };
 
     try {
@@ -102,11 +137,11 @@ export default function CreateEvent() {
       await createEvent(payload);
 
       toast({
-        title: "Event Created Successfully!",
-        description: "Your event has been created and saved.",
+        title: "Event created 🎉",
+        description: "Event is OPEN for registration.",
       });
 
-      setTimeout(() => navigate("/events"), 1500);
+      setTimeout(() => navigate("/events"), 1200);
     } catch (error) {
       toast({
         title: "Error Creating Event",
@@ -133,14 +168,7 @@ export default function CreateEvent() {
 
       {/* Header */}
       <div className="mb-8">
-        <h1
-          className="
-            mb-4 text-5xl font-extrabold
-            bg-gradient-to-r from-primary via-purple-500 to-accent
-            bg-clip-text text-transparent
-            drop-shadow-[0_4px_20px_rgba(99,102,241,0.35)]
-          "
-        >
+        <h1 className="mb-4 pb-2 text-5xl font-extrabold leading-tight bg-gradient-to-r from-primary via-purple-500 to-accent bg-clip-text text-transparent drop-shadow-[0_4px_20px_rgba(99,102,241,0.35)]">
           Create New Event
         </h1>
 
@@ -162,7 +190,9 @@ export default function CreateEvent() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title */}
             <div className="space-y-2">
-              <Label htmlFor="title">Event Title *</Label>
+              <Label htmlFor="title" className="text-base font-medium">
+                Event Title *
+              </Label>
               <Input
                 id="title"
                 className="h-12"
@@ -175,7 +205,9 @@ export default function CreateEvent() {
 
             {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="description">Description *</Label>
+              <Label htmlFor="description" className="text-base font-medium">
+                Description *
+              </Label>
               <Textarea
                 id="description"
                 className="min-h-32 resize-none"
@@ -188,7 +220,7 @@ export default function CreateEvent() {
 
             {/* Date & Time */}
             <div className="space-y-4">
-              <Label>Date & Time *</Label>
+              <Label className="text-base font-medium">Date & Time *</Label>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 {/* Date */}
@@ -247,7 +279,9 @@ export default function CreateEvent() {
             {/* Venue & Capacity */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="venue">Venue Name *</Label>
+                <Label htmlFor="venue" className="text-base font-medium">
+                  Venue Name *
+                </Label>
                 <Input
                   id="venue"
                   className="h-12"
@@ -259,7 +293,9 @@ export default function CreateEvent() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="capacity">Maximum Capacity *</Label>
+                <Label htmlFor="capacity" className="text-base font-medium">
+                  Maximum Capacity *
+                </Label>
                 <Input
                   id="capacity"
                   type="number"
@@ -275,7 +311,9 @@ export default function CreateEvent() {
 
             {/* Address */}
             <div className="space-y-2">
-              <Label htmlFor="address">Venue Address *</Label>
+              <Label htmlFor="address" className="text-base font-medium">
+                Venue Address *
+              </Label>
               <Input
                 id="address"
                 className="h-12"
