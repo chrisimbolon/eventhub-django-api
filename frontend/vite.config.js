@@ -2,7 +2,6 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import { defineConfig } from 'vite'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -11,7 +10,13 @@ export default defineConfig({
     },
   },
   server: {
-    host: '0.0.0.0',  // Listen on all interfaces for Docker networking
-    port: 5173
+    host: '0.0.0.0',
+    port: 5173,
+    allowedHosts: [
+      'eventhub_frontend',
+      'localhost',
+      '127.0.0.1',
+      'eventhub.chrisimbolon.dev' 
+    ]
   },
 })
