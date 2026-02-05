@@ -1,9 +1,10 @@
 """
 Production settings for EventMaster API
 """
-from .base import *
 import os
 from datetime import timedelta
+
+from .base import *
 
 # -------------------------------------
 # General
@@ -83,10 +84,35 @@ SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"] = timedelta(days=7)
 # -------------------------------------
 # Logging (rotating file handler)
 # -------------------------------------
-LOGGING["root"]["handlers"] = ["file"]
-LOGGING["root"]["level"] = "WARNING"
-LOGGING["loggers"]["django"]["level"] = "WARNING"
-LOGGING["handlers"]["file"]["filename"] = BASE_DIR / "logs" / "production.log"
+# LOGGING["root"]["handlers"] = ["file"]
+# LOGGING["root"]["level"] = "WARNING"
+# LOGGING["loggers"]["django"]["level"] = "WARNING"
+# LOGGING["handlers"]["file"]["filename"] = BASE_DIR / "logs" / "production.log"
+
+# -------------------------------------
+# Logging (Docker / stdout)
+# -------------------------------------
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+
 
 # -------------------------------------
 # Gunicorn health check endpoint (optional)
