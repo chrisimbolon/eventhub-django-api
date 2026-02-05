@@ -1,4 +1,5 @@
-import React from "react";
+// src/components/events/EventCard.jsx
+
 import { Link } from "react-router-dom";
 import Button from "../common/Button";
 import CapacityBar from "../common/CapacityBar";
@@ -58,7 +59,9 @@ export default function EventCard({ event }) {
         </div>
 
         <div className="mt-4 flex items-center gap-2">
-          <Link to={`/events/${id}`} className="flex-1">
+          {/* <Link to={`/events/${id}`} className="flex-1"> */}
+          <Link to={`/events/${event.slug}`} className="flex-1">
+
             <Button className="w-full bg-blue-600 text-white hover:bg-blue-700">
               View Details
             </Button>
