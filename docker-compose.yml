@@ -21,21 +21,6 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: eventhub_backend
-    command: >
-      bash -c "
-        echo 'Waiting for database...' &&
-        until nc -z db 5432; do sleep 1; done &&
-        echo 'Database ready!' &&
-        python manage.py migrate &&
-        python manage.py collectstatic --noinput &&
-        echo 'Starting Gunicorn...' &&
-        exec gunicorn eventmaster.wsgi:application \
-          --bind 0.0.0.0:8000 \
-          --workers 2 \
-          --log-level debug \
-          --reload \
-          --forwarded-allow-ips='*'
-      "
     env_file:
       - .env
     depends_on:

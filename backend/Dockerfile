@@ -32,7 +32,10 @@ COPY . /app
 
 # Create non-root user and set ownership
 RUN useradd -m appuser && \
+    mkdir -p /app/staticfiles && \
     chown -R appuser:appuser /app
+# RUN useradd -m appuser && \
+#     chown -R appuser:appuser /app
 
 USER appuser
 

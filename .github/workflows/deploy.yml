@@ -60,8 +60,5 @@ jobs:
           echo "🔹 Running migrations..."
           docker compose exec -T backend python manage.py migrate --noinput
 
-          echo "🔹 Collecting static files..."
-          docker compose exec -T backend python manage.py collectstatic --noinput
-
           echo "✅ EventHub deployment completed successfully!"
           EOF
