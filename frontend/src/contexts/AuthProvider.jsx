@@ -1,8 +1,7 @@
-// // src/contexts/AuthProvider.jsx
+// src/contexts/AuthProvider.jsx
 
-import React, { createContext, useState, useEffect } from "react";
-import { login as loginAPI, registerUser, getProfile } from "@/api/auth";
-import { useNavigate } from "react-router-dom";
+import { getProfile, login as loginAPI, registerUser } from "@/api/auth";
+import { createContext, useEffect, useState } from "react";
 
 export const AuthContext = createContext();
 
@@ -19,50 +18,55 @@ const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const normalizeUser = (rawUser) => {
+    const fullName = `${rawUser.first_name || ""} ${rawUser.last_name || ""}`.trim();
+
+    return {
+      ...rawUser,
+      name:
+        fullName ||
+        rawUser.username ||
+        rawUser.email?.split("@")[0] ||
+        "User",
+    };
+  };
+
   const loadUserProfile = async () => {
     try {
       const userData = await getProfile();
-      setUser(userData);
+      setUser(normalizeUser(userData));
     } catch (error) {
       console.error("Failed to load user profile:", error);
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
+      setUser(null);
     } finally {
       setLoading(false);
     }
   };
 
   const login = async (credentials) => {
-    try {
-      const response = await loginAPI(credentials);
-      localStorage.setItem("access_token", response.access);
-      localStorage.setItem("refresh_token", response.refresh);
-      await loadUserProfile();
-      return response;
-    } catch (error) {
-      console.error("Login error:", error);
-      throw error;
-    }
+    const response = await loginAPI(credentials);
+    localStorage.setItem("access_token", response.access);
+    localStorage.setItem("refresh_token", response.refresh);
+    await loadUserProfile();
+    return response;
   };
 
   const register = async (userData) => {
-    try {
-      const registerData = {
-        username: userData.username,
-        email: userData.email,
-        password: userData.password,
-        password_confirm: userData.password_confirm,
-        first_name: userData.first_name,
-        last_name: userData.last_name,
-        role: userData.role || "attendee",
-      };
-      const response = await registerUser(registerData);
-      await login({ username: userData.username, password: userData.password });
-      return response;
-    } catch (error) {
-      console.error("Registration error:", error);
-      throw error;
-    }
+    const registerData = {
+      username: userData.username,
+      email: userData.email,
+      password: userData.password,
+      password_confirm: userData.password_confirm,
+      first_name: userData.first_name,
+      last_name: userData.last_name,
+      role: userData.role || "attendee",
+    };
+
+    const response = await registerUser(registerData);
+    await login({ username: userData.username, password: userData.password });
+    return response;
   };
 
   const logout = () => {
@@ -78,6 +82,7 @@ const AuthProvider = ({ children }) => {
     register,
     logout,
     isAuthenticated: !!user,
+    isAdmin: user?.role === "admin",
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
