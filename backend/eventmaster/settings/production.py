@@ -69,9 +69,8 @@ CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
 # CSRF trusted origins (important for HTTPS)
-CSRF_TRUSTED_ORIGINS = [
-    "https://eventhub.localhost",
-]
+CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
+
 
 
 # -------------------------------------
