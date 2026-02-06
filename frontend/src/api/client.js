@@ -25,38 +25,31 @@ api.interceptors.request.use(
 );
 
 // Response interceptor 
+// Response interceptor 
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // If 401 occurr and user haven't tried to refresh yet
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
         const refreshToken = localStorage.getItem("refresh_token");
-        
+
         if (!refreshToken) {
-          // No refresh token, redirect to login
           window.location.href = "/auth";
           return Promise.reject(error);
         }
 
-        // Try to refresh the token
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1"}/auth/refresh/`,
-          { refresh: refreshToken }
-        );
+        const response = await api.post("/auth/refresh/", { refresh: refreshToken });
 
         const { access } = response.data;
         localStorage.setItem("access_token", access);
 
-        // Retry the original request with new token
         originalRequest.headers.Authorization = `Bearer ${access}`;
         return api(originalRequest);
       } catch (refreshError) {
-        // Refresh failed, clear tokens and redirect to login
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
         window.location.href = "/auth";
