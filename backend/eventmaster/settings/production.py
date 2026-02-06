@@ -10,10 +10,15 @@ from .base import *
 # General
 # -------------------------------------
 DEBUG = False
-# ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
-# ALLOWED_HOSTS = ["127.0.0.1", "localhost", "eventhub.localhost", "backend"]
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
+# ALLOWED_HOSTS with smart fallback
+ALLOWED_HOSTS = os.getenv(
+    "ALLOWED_HOSTS",
+    "127.0.0.1,localhost,eventhub.localhost,eventhub.chrisimbolon.dev,eventhub_backend,backend"
+).split(",")
+
+# Remove any empty strings from split
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
 
 # -------------------------------------
 # Security
@@ -53,25 +58,24 @@ MEDIA_ROOT = BASE_DIR / "media"
 # CORS
 # -------------------------------------
 CORS_ALLOW_CREDENTIALS = True
+
+# CORS origins with fallback
 CORS_ALLOWED_ORIGINS = os.getenv(
     "CORS_ALLOWED_ORIGINS",
-    "https://eventhub.app,https://api.eventhub.app"
+    "https://eventhub.chrisimbolon.dev"
 ).split(",")
-
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS if origin.strip()]
 
 # Trust X-Forwarded headers from Caddy
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# Enable HTTPS redirect and secure cookies
-SECURE_SSL_REDIRECT = True
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
-
-# CSRF trusted origins (important for HTTPS)
-CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
-
-
+# CSRF trusted origins with fallback
+CSRF_TRUSTED_ORIGINS = os.getenv(
+    "CSRF_TRUSTED_ORIGINS", 
+    "https://eventhub.chrisimbolon.dev"
+).split(",")
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS if origin.strip()]
 
 # -------------------------------------
 # REST Framework + JWT
@@ -81,14 +85,6 @@ REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = (
 )
 SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"] = timedelta(minutes=30)
 SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"] = timedelta(days=7)
-
-# -------------------------------------
-# Logging (rotating file handler)
-# -------------------------------------
-# LOGGING["root"]["handlers"] = ["file"]
-# LOGGING["root"]["level"] = "WARNING"
-# LOGGING["loggers"]["django"]["level"] = "WARNING"
-# LOGGING["handlers"]["file"]["filename"] = BASE_DIR / "logs" / "production.log"
 
 # -------------------------------------
 # Logging (Docker / stdout)
@@ -113,7 +109,6 @@ LOGGING = {
         },
     },
 }
-
 
 # -------------------------------------
 # Gunicorn health check endpoint (optional)
