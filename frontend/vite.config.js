@@ -18,8 +18,13 @@ export default defineConfig({
   },
   
   preview: {
-    host: "0.0.0.0", 
+    host: "0.0.0.0",
     port: 4173,
     strictPort: true,
+    // ✅ CRITICAL: Disable host check
+    cors: true,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
   },
 });

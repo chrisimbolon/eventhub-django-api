@@ -15,6 +15,7 @@ WORKDIR /app
 # Copy built files
 COPY --from=builder /app/dist ./dist
 
+# Copy vite config
 COPY --from=builder /app/vite.config.js ./vite.config.js
 
 # Copy package files
@@ -22,4 +23,5 @@ COPY --from=builder /app/package*.json ./
 RUN npm install --production=false
 
 EXPOSE 4173
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "4173"]
+
+CMD ["npm", "run", "preview"]
