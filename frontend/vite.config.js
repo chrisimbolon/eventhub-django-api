@@ -1,3 +1,5 @@
+// frontend/vite.config.js
+
 import react from "@vitejs/plugin-react";
 import path from "path";
 import { defineConfig } from "vite";
@@ -9,10 +11,15 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-
+  
+  server: {
+    host: true,
+    port: 5173,
+  },
   
   preview: {
-    host: true,
-    allowedHosts: "all", 
+    host: "0.0.0.0",  // ✅ CHANGED: Listen on all interfaces
+    port: 4173,
+    strictPort: true,
   },
 });
