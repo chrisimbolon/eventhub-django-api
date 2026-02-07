@@ -1,5 +1,5 @@
 import react from '@vitejs/plugin-react'
-import path from 'path'
+import path from "path"
 import { defineConfig } from 'vite'
 
 export default defineConfig({
@@ -9,14 +9,11 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  server: {
-    host: '0.0.0.0',
-    port: 5173,
+  preview: {
     allowedHosts: [
-      'eventhub_frontend',
+      'eventhub.chrisimbolon.dev',
       'localhost',
-      '127.0.0.1',
-      'eventhub.chrisimbolon.dev' 
+      '127.0.0.1'
     ]
-  },
+  }
 })
