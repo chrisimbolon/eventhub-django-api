@@ -2,8 +2,24 @@
 
 import axios from "axios";
 
+const getBaseURL = () => {
+  // If VITE_API_URL is set, use it
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // Otherwise, check if we're in production (deployed)
+  if (window.location.hostname === 'eventhub.chrisimbolon.dev') {
+    return 'https://eventhub.chrisimbolon.dev/api/v1';
+  }
+  
+  // Default to localhost for dev
+  return 'http://localhost:8000/api/v1';
+};
+
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1",
+  baseURL: getBaseURL(),
   headers: { 
     "Content-Type": "application/json",
   },
