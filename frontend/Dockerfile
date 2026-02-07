@@ -11,7 +11,13 @@ RUN npm run build
 # Production stage
 FROM node:20-alpine
 WORKDIR /app
+
+# Copy built files
 COPY --from=builder /app/dist ./dist
+
+COPY --from=builder /app/vite.config.js ./vite.config.js
+
+# Copy package files
 COPY --from=builder /app/package*.json ./
 RUN npm install --production=false
 

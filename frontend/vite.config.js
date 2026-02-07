@@ -18,7 +18,7 @@ export default defineConfig({
   },
   
   preview: {
-    host: "0.0.0.0",  // ✅ CHANGED: Listen on all interfaces
+    host: "0.0.0.0", 
     port: 4173,
     strictPort: true,
   },
