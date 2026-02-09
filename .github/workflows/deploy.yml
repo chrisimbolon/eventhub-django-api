@@ -25,14 +25,23 @@ jobs:
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
           set -e
 
-          echo "🔹 Navigating to EventHub directory..."
-          cd /home/apps/eventhub || { echo "❌ Directory not found"; exit 1; }
+          echo "🔹 Go to app dir"
+          cd /home/apps/eventhub || exit 1
 
-          echo "🔹 Pulling latest code..."
+          echo "🔹 Pull latest code"
           git pull origin main
 
-          echo "🔹 Writing .env file..."
-          cat <<EOF_ENV > .env          
+          echo "🔹 Build frontend"
+          cd frontend
+          npm ci
+          npm run build
+          cd ..
+
+          echo "🔹 Sync frontend to Caddy"
+          rsync -av --delete frontend/dist/ /var/www/eventhub/
+
+          echo "🔹 Write backend .env"
+          cat <<EOF_ENV > .env
           POSTGRES_DB=${{ secrets.POSTGRES_DB }}
           POSTGRES_USER=${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
@@ -46,19 +55,11 @@ jobs:
           DEBUG=False
           EOF_ENV
 
-          echo "🔹 Restarting containers..."
-          docker compose down --remove-orphans || true
+          echo "🔹 Deploy backend + db"
+          docker compose up -d --build backend db
 
-          echo "🔹 Removing dangling containers..."
-          docker rm -f eventhub_backend eventhub_frontend eventhub_db || true
-
-          echo "🔹 Cleaning unused networks..."
-          docker network prune -f
-
-          docker compose up -d --build
-
-          echo "🔹 Running migrations..."
+          echo "🔹 Run migrations"
           docker compose exec -T backend python manage.py migrate --noinput
 
-          echo "✅ EventHub deployment completed successfully!"
+          echo "✅ EventHub deployed successfully"
           EOF

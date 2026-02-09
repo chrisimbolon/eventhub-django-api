@@ -1,3 +1,5 @@
+# docker-compose.yml (Production)
+
 services:
   db:
     image: postgres:16
@@ -28,16 +30,6 @@ services:
       - ./backend:/app
     expose:
       - "8000"
-    networks:
-      - eventhub-net
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: eventhub_frontend
-    expose:
-      - "4173"
     networks:
       - eventhub-net
 
