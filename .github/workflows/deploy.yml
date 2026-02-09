@@ -13,6 +13,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
@@ -20,27 +31,16 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy EventHub
+      - name: Deploy to Droplet
         run: |
+          rsync -avz --delete frontend/dist/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/eventhub/
+
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
           set -e
+          cd /home/apps/eventhub
 
-          echo "🔹 Go to app dir"
-          cd /home/apps/eventhub || exit 1
-
-          echo "🔹 Pull latest code"
           git pull origin main
 
-          echo "🔹 Build frontend"
-          cd frontend
-          npm ci
-          npm run build
-          cd ..
-
-          echo "🔹 Sync frontend to Caddy"
-          rsync -av --delete frontend/dist/ /var/www/eventhub/
-
-          echo "🔹 Write backend .env"
           cat <<EOF_ENV > .env
           POSTGRES_DB=${{ secrets.POSTGRES_DB }}
           POSTGRES_USER=${{ secrets.POSTGRES_USER }}
@@ -55,11 +55,6 @@ jobs:
           DEBUG=False
           EOF_ENV
 
-          echo "🔹 Deploy backend + db"
           docker compose up -d --build backend db
-
-          echo "🔹 Run migrations"
           docker compose exec -T backend python manage.py migrate --noinput
-
-          echo "✅ EventHub deployed successfully"
           EOF
