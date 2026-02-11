@@ -1,14 +1,14 @@
 -r base.txt
 
 # Production monitoring
-sentry-sdk==1.40.0
+sentry-sdk==2.19.0
 
 # Performance - Caching
 django-redis==5.4.0
 redis==5.0.1
 
 # Security enhancements
-django-axes==6.1.1
+# django-axes==6.1.1
 
 # Logging
 python-json-logger==2.0.7

@@ -25,7 +25,7 @@ ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
 # Security
 # -------------------------------------
 
-# ✅ FIXED: Don't use a fallback for SECRET_KEY in production!
+#  Not using a fallback for SECRET_KEY in production!
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise ValueError("SECRET_KEY environment variable is required in production!")
@@ -51,9 +51,9 @@ DATABASES = {
         "NAME": os.getenv("POSTGRES_DB", "eventhub_db"),
         "USER": os.getenv("POSTGRES_USER", "eventhub_user"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD", "eventhub_pass"),
-        "HOST": os.getenv("POSTGRES_HOST", "eventhub_db"),  # ✅ FIXED fallback
+        "HOST": os.getenv("POSTGRES_HOST", "eventhub_db"),  
         "PORT": os.getenv("POSTGRES_PORT", "5432"),
-        "CONN_MAX_AGE": 60,  # ✅ ADDED: Connection pooling (better performance)
+        "CONN_MAX_AGE": 60,  
     }
 }
 
@@ -137,15 +137,16 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "format": "{levelname} {asctime} {module} {message}",  # ✅ ADDED: Better format
+            "format": "{levelname} {asctime} {module} {message}",
             "style": "{",
         },
     },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "formatter": "verbose",  # ✅ ADDED: Use verbose format
+            "formatter": "verbose",
         },
+        # ✅ NO file handler in production!
     },
     "root": {
         "handlers": ["console"],
@@ -157,7 +158,7 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
-        "django.request": {           # ✅ ADDED: Log all requests
+        "django.request": {
             "handlers": ["console"],
             "level": "WARNING",
             "propagate": False,
