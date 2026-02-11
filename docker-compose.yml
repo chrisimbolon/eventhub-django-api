@@ -27,7 +27,8 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ./backend:/app
+      - media_volume:/app/media
+      - static_volume:/app/staticfiles
     expose:
       - "8000"
     networks:
@@ -39,3 +40,5 @@ networks:
 
 volumes:
   postgres_data:
+  media_volume:
+  static_volume:

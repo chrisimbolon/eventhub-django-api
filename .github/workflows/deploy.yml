@@ -10,9 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # -------------------------------------------------------
+      # 1. Checkout code
+      # -------------------------------------------------------
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # -------------------------------------------------------
+      # 2. Build React frontend
+      # -------------------------------------------------------
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -24,6 +30,35 @@ jobs:
           npm ci
           npm run build
 
+      # -------------------------------------------------------
+      # 3. Write .env locally on the runner (no heredoc inside SSH!)
+      # -------------------------------------------------------
+      - name: Write .env file
+        run: |
+          cat > .env << 'ENVEOF'
+POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+POSTGRES_HOST=eventhub_db
+POSTGRES_PORT=5432
+SECRET_KEY=${{ secrets.SECRET_KEY }}
+DJANGO_SETTINGS_MODULE=eventmaster.settings.production
+ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
+CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS }}
+CSRF_TRUSTED_ORIGINS=${{ secrets.CSRF_TRUSTED_ORIGINS }}
+DEBUG=False
+EMAIL_BACKEND=${{ secrets.EMAIL_BACKEND }}
+EMAIL_HOST=${{ secrets.EMAIL_HOST }}
+EMAIL_PORT=${{ secrets.EMAIL_PORT }}
+EMAIL_USE_TLS=${{ secrets.EMAIL_USE_TLS }}
+EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}
+EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}
+DEFAULT_FROM_EMAIL=${{ secrets.DEFAULT_FROM_EMAIL }}
+ENVEOF
+
+      # -------------------------------------------------------
+      # 4. Set up SSH
+      # -------------------------------------------------------
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
@@ -31,30 +66,45 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
+      # -------------------------------------------------------
+      # 5. Upload frontend dist + .env via rsync
+      # -------------------------------------------------------
+      - name: Upload frontend dist
+        run: |
+          rsync -avz --delete frontend/dist/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/eventhub/
+
+      - name: Upload .env file
+        run: |
+          rsync -avz .env \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/apps/eventhub/.env
+
+      # -------------------------------------------------------
+      # 6. Deploy on the Droplet via SSH (clean, no nested heredoc)
+      # -------------------------------------------------------
       - name: Deploy to Droplet
         run: |
-          rsync -avz --delete frontend/dist/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/eventhub/
-
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-          set -e
-          cd /home/apps/eventhub
+            set -e
+            cd /home/apps/eventhub
 
-          git pull origin main
+            echo "🔹 Pulling latest code..."
+            git pull origin main
 
-          cat <<EOF_ENV > .env
-          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_HOST=eventhub_db
-          POSTGRES_PORT=5432
-          SECRET_KEY=${{ secrets.SECRET_KEY }}
-          DJANGO_SETTINGS_MODULE=eventmaster.settings.production
-          ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
-          CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS }}
-          CSRF_TRUSTED_ORIGINS=${{ secrets.CSRF_TRUSTED_ORIGINS }}
-          DEBUG=False
-          EOF_ENV
+            echo "🔹 Rebuilding backend container..."
+            docker compose up -d --build backend db
 
-          docker compose up -d --build backend db
-          docker compose exec -T backend python manage.py migrate --noinput
+            echo "🔹 Waiting for backend to be ready..."
+            sleep 10
+
+            echo "🔹 Verifying Django can start..."
+            docker compose exec -T backend python -c "import django; django.setup(); print('✅ Django ready!')"
+
+            echo "🔹 Running migrations..."
+            docker compose exec -T backend python manage.py migrate --noinput
+
+            echo "🔹 Collecting static files..."
+            docker compose exec -T backend python manage.py collectstatic --noinput
+
+            echo "✅ EventHub deployment completed successfully!"
           EOF
