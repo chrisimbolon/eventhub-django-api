@@ -12,7 +12,7 @@ COPY requirements ./requirements
 # Upgrade pip + install setuptools first (needed by some packages at build time)
 # Then build wheels — note: --no-deps skips transitive deps so setuptools
 # must be handled separately
-RUN pip install --upgrade pip setuptools && \
+RUN pip install --no-cache-dir setuptools>=69.0.0 && \
     pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r requirements/production.txt
 
 # ----------- Final stage -----------
