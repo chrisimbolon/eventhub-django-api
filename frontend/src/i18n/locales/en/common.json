@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "home": "Home",
+    "events": "Events",
+    "admin": "Admin",
+    "logout": "Logout",
+    "login": "Login",
+    "hi": "Hi"
+  },
+  "actions": {
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "submit": "Submit",
+    "search": "Search",
+    "filter": "Filter",
+    "viewDetails": "View Details"
+  },
+  "status": {
+    "open": "Open",
+    "closed": "Closed",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "footer": {
+    "builtWith": "built with lots of Coffee"
+  }
+}
