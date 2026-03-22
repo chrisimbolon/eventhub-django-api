@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "home": "Beranda",
+    "events": "Acara",
+    "admin": "Admin",
+    "logout": "Keluar",
+    "login": "Masuk",
+    "hi": "Hai"
+  },
+  "actions": {
+    "create": "Buat",
+    "edit": "Ubah",
+    "delete": "Hapus",
+    "cancel": "Batal",
+    "save": "Simpan",
+    "submit": "Kirim",
+    "search": "Cari",
+    "filter": "Filter",
+    "viewDetails": "Lihat Detail"
+  },
+  "status": {
+    "open": "Terbuka",
+    "closed": "Tutup",
+    "loading": "Memuat...",
+    "error": "Galat",
+    "success": "Berhasil"
+  },
+  "footer": {
+    "builtWith": "dibuat dengan banyak Kopi"
+  }
+}
