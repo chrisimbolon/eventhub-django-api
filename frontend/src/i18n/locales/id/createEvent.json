@@ -1,0 +1,18 @@
+{
+  "title": "Buat Acara Baru",
+  "subtitle": "Isi detail untuk membuat konferensi teknis baru",
+  "eventTitle": "Judul Acara",
+  "eventTitlePlaceholder": "contoh: Summit React 2025",
+  "description": "Deskripsi",
+  "descriptionPlaceholder": "Deskripsikan acara Anda...",
+  "eventDate": "Tanggal Acara",
+  "startTime": "Waktu Mulai",
+  "endTime": "Waktu Selesai",
+  "venueName": "Nama Tempat",
+  "venueNamePlaceholder": "contoh: Pusat Konvensi",
+  "venueAddress": "Alamat Tempat",
+  "venueAddressPlaceholder": "Alamat lengkap tempat acara",
+  "capacity": "Kapasitas Maksimal",
+  "capacityPlaceholder": "contoh: 500",
+  "backToEvents": "Kembali ke Acara"
+}
