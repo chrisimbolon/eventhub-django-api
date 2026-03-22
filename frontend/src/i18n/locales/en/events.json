@@ -1,0 +1,15 @@
+{
+  "title": "Explore Events",
+  "subtitle": "Discover and join conferences, meetups, and summits around the world.",
+  "createEvent": "Create Event",
+  "noEvents": "No events found",
+  "organizedBy": "Organized by",
+  "spotsLeft": "spots left",
+  "capacity": "Capacity",
+  "register": "Register",
+  "registered": "Registered",
+  "venue": "Venue",
+  "dateTime": "Date & Time",
+  "description": "Description",
+  "sessions": "Sessions"
+}
