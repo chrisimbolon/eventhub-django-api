@@ -2,11 +2,12 @@
 # apps/users/views.py
 # ============================================
 
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
+from rest_framework import generics, status
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from .serializers import RegisterSerializer, UserProfileSerializer
 
 User = get_user_model()
@@ -30,8 +31,9 @@ class RegisterView(generics.CreateAPIView):
                 'id': user.id,
                 'username': user.username,
                 'email': user.email,
-                'full_name': user.get_full_name(),
+                # 'full_name': user.get_full_name(),
                 'role': user.role,
+                'display_name': user.display_name,
             },
             'message': 'User registered successfully. Please login to get your access token.'
         }, status=status.HTTP_201_CREATED)
