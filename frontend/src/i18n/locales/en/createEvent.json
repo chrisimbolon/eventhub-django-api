@@ -1,0 +1,18 @@
+{
+  "title": "Create New Event",
+  "subtitle": "Fill in the details to create a new technical conference",
+  "eventTitle": "Event Title",
+  "eventTitlePlaceholder": "e.g., React Summit 2025",
+  "description": "Description",
+  "descriptionPlaceholder": "Describe your event...",
+  "eventDate": "Event Date",
+  "startTime": "Start Time",
+  "endTime": "End Time",
+  "venueName": "Venue Name",
+  "venueNamePlaceholder": "e.g., Convention Center",
+  "venueAddress": "Venue Address",
+  "venueAddressPlaceholder": "Full venue address",
+  "capacity": "Maximum Capacity",
+  "capacityPlaceholder": "e.g., 500",
+  "backToEvents": "Back to Events"
+}
