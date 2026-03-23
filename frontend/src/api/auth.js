@@ -34,7 +34,7 @@ export const getProfile = async () => {
 
 export const updateProfile = async (data) => {
   try {
-    const response = await api.patch("/auth/profile/", data);  // ✅ FIXED
+    const response = await api.patch("/auth/profile/", data);  
     return response.data;
   } catch (error) {
     console.error("Update profile API error:", error.response?.data);
@@ -45,7 +45,7 @@ export const updateProfile = async (data) => {
 export const refreshToken = async () => {
   try {
     const refresh = localStorage.getItem("refresh_token");
-    const response = await api.post("/auth/refresh/", { refresh });  // ✅ FIXED
+    const response = await api.post("/auth/refresh/", { refresh });  
     return response.data;
   } catch (error) {
     console.error("Token refresh error:", error.response?.data);
