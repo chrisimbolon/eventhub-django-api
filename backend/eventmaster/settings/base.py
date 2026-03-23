@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'apps.session_manager',
     'apps.tracks',
     'apps.users',
+    'apps.mice',
 ]
 
 MIDDLEWARE = [
