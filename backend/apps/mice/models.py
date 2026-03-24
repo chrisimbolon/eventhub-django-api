@@ -826,6 +826,7 @@ class ProjectAsset(models.Model):
     file_size       = models.PositiveIntegerField(default=0, help_text='Bytes')
     mime_type       = models.CharField(max_length=100, blank=True)
     version         = models.CharField(max_length=50, blank=True, help_text='e.g. v1, v2-final')
+    client_visible  = models.BooleanField(default=False, db_index=True,help_text='If True, visible to client via their portal',)
 
     created_at      = models.DateTimeField(auto_now_add=True)
     updated_at      = models.DateTimeField(auto_now=True)
