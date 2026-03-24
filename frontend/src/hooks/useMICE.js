@@ -13,9 +13,11 @@ import {
   createSubEvent,
   createTask,
   createVendor,
+  deleteAsset,
   deleteLineItem,
   deleteSection,
   deleteSubEvent,
+  fetchAssetsByType,
   fetchMICEProject,
   fetchMICEProjectDashboard,
   fetchMICEProjects,
@@ -26,12 +28,14 @@ import {
   markPaymentReceived,
   recalculateQuotation,
   sendQuotationToClient,
+  toggleAssetVisibility,
   updateLineItem,
   updateMICEProject,
   updateQuotation,
   updateSection,
   updateSubEvent,
   updateTask,
+  uploadAsset,
 } from "../api/mice";
 
 // ── MICE Projects ─────────────────────────────────────────────────────────────
@@ -365,6 +369,46 @@ export const useCompleteTask = () => {
     mutationFn: completeTask,
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["mice-tasks", data.mice_project] });
+    },
+  });
+};
+
+// ── Assets ────────────────────────────────────────────────────────────────────
+
+export const useAssetsByType = (projectId) =>
+  useQuery({
+    queryKey: ['mice-assets', projectId],
+    queryFn:  () => fetchAssetsByType(projectId),
+    enabled:  !!projectId,
+  });
+
+export const useUploadAsset = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ projectId, formData }) => uploadAsset(projectId, formData),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['mice-assets', variables.projectId] });
+      qc.invalidateQueries({ queryKey: ['mice-project', variables.projectId] });
+    },
+  });
+};
+
+export const useToggleAssetVisibility = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ projectId, assetId }) => toggleAssetVisibility(projectId, assetId),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['mice-assets', variables.projectId] });
+    },
+  });
+};
+
+export const useDeleteAsset = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ projectId, assetId }) => deleteAsset(projectId, assetId),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['mice-assets', variables.projectId] });
     },
   });
 };
