@@ -352,26 +352,34 @@ class ProjectTaskSerializer(serializers.ModelSerializer):
             and obj.status not in ('done',)
         )
 
-
-# ── ProjectAsset ──────────────────────────────────────────────────────────────
+# ── ADD to apps/mice/serializers.py ──────────────────────────────────────────
+# Replace existing ProjectAssetSerializer with this version
 
 class ProjectAssetSerializer(serializers.ModelSerializer):
     uploaded_by_name    = serializers.CharField(
         source='uploaded_by.get_full_name', read_only=True, default=None
     )
-    asset_type_display  = serializers.CharField(source='get_asset_type_display', read_only=True)
+    asset_type_display  = serializers.CharField(
+        source='get_asset_type_display', read_only=True
+    )
     file_size_display   = serializers.SerializerMethodField()
+    file_url            = serializers.SerializerMethodField()
+    is_image            = serializers.SerializerMethodField()
 
     class Meta:
         model   = ProjectAsset
         fields  = [
             'id', 'asset_type', 'asset_type_display',
-            'title', 'description', 'file', 'version',
+            'title', 'description', 'file', 'file_url', 'version',
             'file_size', 'file_size_display', 'mime_type',
+            'client_visible',
             'sub_event', 'uploaded_by', 'uploaded_by_name',
-            'created_at',
+            'is_image', 'created_at',
         ]
-        read_only_fields = ['id', 'file_size', 'mime_type', 'uploaded_by', 'created_at']
+        read_only_fields = [
+            'id', 'file_size', 'mime_type',
+            'uploaded_by', 'created_at',
+        ]
 
     def get_file_size_display(self, obj):
         size = obj.file_size
@@ -382,6 +390,15 @@ class ProjectAssetSerializer(serializers.ModelSerializer):
         else:
             return f'{size / (1024 * 1024):.1f} MB'
 
+    def get_file_url(self, obj):
+        request = self.context.get('request')
+        if obj.file and request:
+            return request.build_absolute_uri(obj.file.url)
+        return None
+
+    def get_is_image(self, obj):
+        return obj.mime_type.startswith('image/') if obj.mime_type else False
+
     def create(self, validated_data):
         validated_data['uploaded_by'] = self.context['request'].user
         file = validated_data.get('file')
@@ -389,6 +406,32 @@ class ProjectAssetSerializer(serializers.ModelSerializer):
             validated_data['file_size'] = file.size
             validated_data['mime_type'] = getattr(file, 'content_type', '')
         return super().create(validated_data)
+
+
+# ── Client-facing asset serializer (strips internal-only assets) ──────────────
+class ProjectAssetClientSerializer(serializers.ModelSerializer):
+    asset_type_display = serializers.CharField(
+        source='get_asset_type_display', read_only=True
+    )
+    file_url            = serializers.SerializerMethodField()
+    is_image            = serializers.SerializerMethodField()
+
+    class Meta:
+        model   = ProjectAsset
+        fields  = [
+            'id', 'asset_type', 'asset_type_display',
+            'title', 'description', 'file_url',
+            'version', 'file_size', 'is_image', 'created_at',
+        ]
+
+    def get_file_url(self, obj):
+        request = self.context.get('request')
+        if obj.file and request:
+            return request.build_absolute_uri(obj.file.url)
+        return None
+
+    def get_is_image(self, obj):
+        return obj.mime_type.startswith('image/') if obj.mime_type else False
 
 
 # ── MICEProject ───────────────────────────────────────────────────────────────
