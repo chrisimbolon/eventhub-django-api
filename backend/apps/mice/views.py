@@ -9,6 +9,7 @@ from rest_framework import viewsets, generics, status, permissions
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from .models import (
     MICEProject, SubEvent, Quotation, QuotationSection,
@@ -476,26 +477,91 @@ class ProjectTaskViewSet(viewsets.ModelViewSet):
 # ── ProjectAsset ──────────────────────────────────────────────────────────────
 
 class ProjectAssetViewSet(viewsets.ModelViewSet):
+    """
+    Asset management for MICE projects.
+    Supports multipart file uploads.
+    """
     serializer_class    = ProjectAssetSerializer
     permission_classes  = [IsAuthenticated]
+    parser_classes      = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
+        project_id = self.kwargs.get('project_pk') or self.request.query_params.get('project')
         qs = ProjectAsset.objects.filter(
             mice_project__organizer=self.request.user
         ).select_related('uploaded_by', 'sub_event')
-        project_id = self.kwargs.get('project_pk') or self.request.query_params.get('project')
+
         if project_id:
             qs = qs.filter(mice_project_id=project_id)
-        return qs.order_by('-created_at')
+
+        asset_type = self.request.query_params.get('asset_type')
+        if asset_type:
+            qs = qs.filter(asset_type=asset_type)
+
+        return qs.order_by('asset_type', '-created_at')
 
     def perform_create(self, serializer):
-        project = get_object_or_404(
-            MICEProject,
-            pk=self.kwargs.get('project_pk') or self.request.data.get('mice_project'),
-            organizer=self.request.user,
+        project_id = self.kwargs.get('project_pk') or self.request.data.get('mice_project')
+        project    = MICEProject.objects.get(
+            id=project_id, organizer=self.request.user
         )
-        serializer.save(mice_project=project, uploaded_by=self.request.user)
+        serializer.save(
+            uploaded_by     = self.request.user,
+            mice_project    = project,
+        )
 
+    @action(detail=True, methods=['patch'], url_path='toggle-visibility')
+    def toggle_visibility(self, request, *args, **kwargs):
+        """Toggle whether an asset is visible to the client."""
+        asset = self.get_object()
+        asset.client_visible = not asset.client_visible
+        asset.save(update_fields=['client_visible'])
+        return Response({
+            'id':             str(asset.id),
+            'client_visible': asset.client_visible,
+            'message':        f"Asset {'now visible to' if asset.client_visible else 'hidden from'} client",
+        })
+
+    @action(detail=False, methods=['get'], url_path='by-type')
+    def by_type(self, request, *args, **kwargs):
+        """
+        Return assets grouped by type.
+        Used by the Asset Hub UI.
+        """
+        project_id = self.kwargs.get('project_pk') or request.query_params.get('project')
+        if not project_id:
+            return Response({'error': 'project_id required'}, status=400)
+
+        assets = ProjectAsset.objects.filter(
+            mice_project_id=project_id,
+            mice_project__organizer=request.user,
+        ).select_related('uploaded_by').order_by('asset_type', '-created_at')
+
+        # Group by asset_type
+        grouped = {}
+        type_labels = dict(ProjectAsset.ASSET_TYPES)
+
+        for asset in assets:
+            t = asset.asset_type
+            if t not in grouped:
+                grouped[t] = {
+                    'type':     t,
+                    'label':    type_labels.get(t, t),
+                    'assets':   [],
+                    'count':    0,
+                    'internal': t == 'contract',  # vendor contracts always internal
+                }
+            serializer = ProjectAssetSerializer(
+                asset, context={'request': request}
+            )
+            grouped[t]['assets'].append(serializer.data)
+            grouped[t]['count'] += 1
+
+        # Return in consistent order matching ASSET_TYPES
+        order = [t for t, _ in ProjectAsset.ASSET_TYPES]
+        result = [grouped[t] for t in order if t in grouped]
+
+        return Response(result)
 
 # ── Vendor ────────────────────────────────────────────────────────────────────
 
