@@ -142,3 +142,21 @@ export const fetchClientPortal = (token) =>
 
 export const approveQuotationAsClient = (token) =>
   api.post(`/mice/quotation/portal/${token}/approve/`).then((r) => r.data);
+
+
+// ── Project Assets ────────────────────────────────────────────────────────────
+
+export const fetchAssetsByType = (projectId) =>
+  api.get(`/mice/projects/${projectId}/assets/by-type/`).then((r) => r.data);
+
+export const uploadAsset = (projectId, formData) =>
+  api.post(`/mice/projects/${projectId}/assets/`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then((r) => r.data);
+
+export const toggleAssetVisibility = (projectId, assetId) =>
+  api.patch(`/mice/projects/${projectId}/assets/${assetId}/toggle-visibility/`)
+    .then((r) => r.data);
+
+export const deleteAsset = (projectId, assetId) =>
+  api.delete(`/mice/projects/${projectId}/assets/${assetId}/`);
