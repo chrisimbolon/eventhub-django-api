@@ -1,5 +1,4 @@
 // src/pages/AssetHubPage.jsx
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,14 +17,13 @@ import {
   EyeOff,
   File,
   FileImage,
-  FilePdf,
   FileText,
   FileVideo,
   Folder,
   Plus,
   Trash2,
   Upload,
-  Users,
+  Users
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
