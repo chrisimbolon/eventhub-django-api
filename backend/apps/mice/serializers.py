@@ -529,3 +529,85 @@ class MICEProjectCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['organizer'] = self.context['request'].user
         return super().create(validated_data)
+
+
+class MICEProjectWithEventCreateSerializer(serializers.Serializer):
+    """
+    Creates an Event AND a MICEProject atomically in one API call.
+    No need to create an Event separately first.
+
+    POST /api/v1/mice/projects/create-with-event/
+    """
+    # ── Event fields ──────────────────────────────────────────────────────────
+    event_title         = serializers.CharField(max_length=255)
+    event_start_date    = serializers.DateTimeField()
+    event_end_date      = serializers.DateTimeField()
+    venue_name          = serializers.CharField(max_length=255)
+    venue_address       = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    city                = serializers.CharField(max_length=100, required=False, allow_blank=True, default='')
+    capacity            = serializers.IntegerField(min_value=1, default=500)
+
+    # ── MICE / Client fields ──────────────────────────────────────────────────
+    client_company      = serializers.CharField(max_length=255)
+    client_pic          = serializers.CharField(max_length=255)
+    client_email        = serializers.EmailField(required=False, allow_blank=True)
+    client_phone        = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    client_address      = serializers.CharField(required=False, allow_blank=True)
+    internal_notes      = serializers.CharField(required=False, allow_blank=True)
+
+    def validate(self, data):
+        if data['event_end_date'] < data['event_start_date']:
+            raise serializers.ValidationError(
+                {'event_end_date': 'End date must be after start date'}
+            )
+        return data
+
+    def create(self, validated_data):
+        from django.utils.text import slugify
+        from django.utils import timezone
+        from apps.events.models import Event
+        import uuid
+
+        user = self.context['request'].user
+
+        # Build a unique slug from the title
+        base_slug = slugify(validated_data['event_title'])
+        slug = base_slug
+        counter = 1
+        while Event.objects.filter(slug=slug).exists():
+            slug = f'{base_slug}-{counter}'
+            counter += 1
+
+        with __import__('django.db', fromlist=['transaction']).transaction.atomic():
+            # 1. Create the Event
+            event = Event.objects.create(
+                title               = validated_data['event_title'],
+                slug                = slug,
+                description         = f"MICE Event: {validated_data['event_title']}",
+                event_type          = 'conference',
+                status              = 'draft',
+                start_date          = validated_data['event_start_date'],
+                end_date            = validated_data['event_end_date'],
+                registration_start  = validated_data['event_start_date'],
+                registration_end    = validated_data['event_end_date'],
+                venue_name          = validated_data['venue_name'],
+                venue_address       = validated_data.get('venue_address', ''),
+                city                = validated_data.get('city', ''),
+                country             = 'Indonesia',
+                capacity            = validated_data.get('capacity', 500),
+                organizer           = user,
+            )
+
+            # 2. Create the MICEProject linked to that Event
+            project = MICEProject.objects.create(
+                event           = event,
+                organizer       = user,
+                client_company  = validated_data['client_company'],
+                client_pic      = validated_data['client_pic'],
+                client_email    = validated_data.get('client_email', ''),
+                client_phone    = validated_data.get('client_phone', ''),
+                client_address  = validated_data.get('client_address', ''),
+                internal_notes  = validated_data.get('internal_notes', ''),
+            )
+
+        return project
