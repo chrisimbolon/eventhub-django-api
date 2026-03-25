@@ -1,5 +1,4 @@
 // src/pages/MICEProjectDetailPage.jsx
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,13 +17,12 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
-  FileText,
-  Mail,
+  FileText, FolderOpen, Mail,
   Phone,
   Plus,
   Rocket,
   User,
-  Zap,
+  Zap
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -424,6 +422,16 @@ export default function MICEProjectDetailPage() {
                     <Zap size={13} />
                     Buat Quotation
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/mice/projects/${project.id}/assets`)}
+                    className="gap-2"
+                  >
+                    <FolderOpen size={14} />
+                    Asset Hub
+                  </Button>
+
                 </div>
               )}
               {project.quotations?.map(q => (
