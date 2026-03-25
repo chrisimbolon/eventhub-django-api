@@ -1,13 +1,14 @@
 // src/pages/MICEProjectsPage.jsx
-import { Badge } from "@/components/ui/badge";
+// FULL REPLACEMENT — CreateProjectModal now creates Event + MICEProject in one shot
+
+import api from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { useEvents } from "@/hooks/useEvents";
-import { useCreateMICEProject, useMICEProjects } from "@/hooks/useMICE";
+import { useMICEProjects } from "@/hooks/useMICE";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Building2,
   Calendar,
@@ -16,10 +17,13 @@ import {
   FileText,
   Plus,
   TrendingUp,
-  X,
+  Users,
+  X
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 const IDR = (val) =>
   new Intl.NumberFormat("id-ID", {
@@ -38,6 +42,25 @@ const STATUS_CONFIG = {
   cancelled: { label: "Batal",      className: "bg-red-50 text-red-600 border-red-200" },
 };
 
+// ── API call ──────────────────────────────────────────────────────────────────
+
+const createMICEProjectWithEvent = (data) =>
+  api.post("/mice/projects/create-with-event/", data).then((r) => r.data);
+
+// ── Hook ──────────────────────────────────────────────────────────────────────
+
+const useCreateMICEProjectWithEvent = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: createMICEProjectWithEvent,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["mice-projects"] });
+    },
+  });
+};
+
+// ── StatCard ──────────────────────────────────────────────────────────────────
+
 function StatCard({ title, value, sub, icon: Icon, accent }) {
   return (
     <div className={`bg-white rounded-xl border p-5 flex items-start gap-4 ${accent ? "border-l-4 border-l-slate-800" : ""}`}>
@@ -52,6 +75,8 @@ function StatCard({ title, value, sub, icon: Icon, accent }) {
     </div>
   );
 }
+
+// ── ProjectCard ───────────────────────────────────────────────────────────────
 
 function ProjectCard({ project }) {
   const navigate  = useNavigate();
@@ -137,32 +162,77 @@ function ProjectCard({ project }) {
   );
 }
 
+// ── Section divider helper ────────────────────────────────────────────────────
+
+function SectionLabel({ children }) {
+  return (
+    <div className="flex items-center gap-2 pt-2">
+      <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+        {children}
+      </span>
+      <div className="flex-1 h-px bg-slate-100" />
+    </div>
+  );
+}
+
+// ── CreateProjectModal — Combined Event + MICE Project ────────────────────────
+
 function CreateProjectModal({ onClose }) {
-  const { toast }     = useToast();
-  const navigate      = useNavigate();
-  const create        = useCreateMICEProject();
-  const { data: events = [] } = useEvents({ status: "published" });
+  const { toast }   = useToast();
+  const navigate    = useNavigate();
+  const create      = useCreateMICEProjectWithEvent();
+
   const [form, setForm] = useState({
-    event: "", client_company: "", client_pic: "",
-    client_email: "", client_phone: "",
+    // Event fields
+    event_title:      "",
+    event_start_date: "",
+    event_end_date:   "",
+    venue_name:       "",
+    venue_address:    "",
+    city:             "",
+    capacity:         "",
+    // Client fields
+    client_company:   "",
+    client_pic:       "",
+    client_email:     "",
+    client_phone:     "",
   });
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.event || !form.client_company || !form.client_pic) {
-      toast({ title: "Event, klien, dan PIC wajib diisi", variant: "destructive" });
+
+    // Required field check
+    const required = ["event_title", "event_start_date", "event_end_date", "venue_name", "client_company", "client_pic"];
+    const missing = required.filter((k) => !form[k]);
+    if (missing.length > 0) {
+      toast({ title: "Harap lengkapi semua field wajib (*)", variant: "destructive" });
       return;
     }
-    create.mutate(form, {
+
+    const payload = {
+      ...form,
+      capacity: form.capacity ? parseInt(form.capacity) : 500,
+    };
+
+    create.mutate(payload, {
       onSuccess: (data) => {
-        toast({ title: "Project berhasil dibuat!" });
+        toast({ title: `Project "${form.event_title}" berhasil dibuat!` });
         navigate(`/mice/projects/${data.id}`);
       },
       onError: (err) => {
-        const msg = err?.response?.data?.event?.[0]
-          || err?.response?.data?.detail
-          || "Gagal membuat project";
+        const errData = err?.response?.data;
+        // Try to find the first readable error message
+        let msg = "Gagal membuat project";
+        if (errData) {
+          if (typeof errData === "string") msg = errData;
+          else if (errData.detail) msg = errData.detail;
+          else {
+            const firstKey = Object.keys(errData)[0];
+            if (firstKey) msg = `${firstKey}: ${errData[firstKey][0]}`;
+          }
+        }
         toast({ title: msg, variant: "destructive" });
       },
     });
@@ -170,63 +240,157 @@ function CreateProjectModal({ onClose }) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <Card className="w-full max-w-lg shadow-2xl">
-        <CardHeader className="pb-4">
+      <Card className="w-full max-w-2xl shadow-2xl my-4">
+        <CardHeader className="pb-4 border-b border-slate-100">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Buat MICE Project Baru</CardTitle>
+            <div>
+              <CardTitle className="text-lg">Buat MICE Project Baru</CardTitle>
+              <p className="text-sm text-slate-400 mt-0.5">
+                Event dan project dibuat sekaligus dalam satu langkah
+              </p>
+            </div>
             <button
               onClick={onClose}
-              className="p-1 rounded hover:bg-slate-100 text-slate-400"
+              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
             >
               <X size={18} />
             </button>
           </div>
         </CardHeader>
-        <CardContent>
+
+        <CardContent className="pt-5">
           <form onSubmit={handleSubmit} className="space-y-4">
+
+            {/* ── EVENT INFO ─────────────────────────────────────────── */}
+            <SectionLabel>
+              <Calendar size={12} className="inline mr-1" />
+              Informasi Event
+            </SectionLabel>
+
             <div>
-              <Label className="text-sm mb-1.5 block">Event *</Label>
-              <select
-                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-800"
-                value={form.event}
-                onChange={e => set("event", e.target.value)}
+              <Label className="text-sm mb-1.5 block">
+                Nama Event <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                value={form.event_title}
+                onChange={(e) => set("event_title", e.target.value)}
+                placeholder="e.g. MUFEST 2025 — Mandiri Utama Finance"
                 required
-              >
-                <option value="">-- Pilih Event --</option>
-                {events.map(ev => (
-                  <option key={ev.id} value={ev.id}>{ev.title}</option>
-                ))}
-              </select>
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <Label className="text-sm mb-1.5 block">Nama Klien / Perusahaan *</Label>
+              <div>
+                <Label className="text-sm mb-1.5 block">
+                  Tanggal Mulai <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  type="datetime-local"
+                  value={form.event_start_date}
+                  onChange={(e) => set("event_start_date", e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <Label className="text-sm mb-1.5 block">
+                  Tanggal Selesai <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  type="datetime-local"
+                  value={form.event_end_date}
+                  onChange={(e) => set("event_end_date", e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm mb-1.5 block">
+                  Nama Venue <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  value={form.venue_name}
+                  onChange={(e) => set("venue_name", e.target.value)}
+                  placeholder="e.g. Wanaku Resort Bali"
+                  required
+                />
+              </div>
+              <div>
+                <Label className="text-sm mb-1.5 block">Kota</Label>
+                <Input
+                  value={form.city}
+                  onChange={(e) => set("city", e.target.value)}
+                  placeholder="e.g. Bali"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm mb-1.5 block">Alamat Venue</Label>
+                <Input
+                  value={form.venue_address}
+                  onChange={(e) => set("venue_address", e.target.value)}
+                  placeholder="e.g. Kuta Utara, Bali"
+                />
+              </div>
+              <div>
+                <Label className="text-sm mb-1.5 block">
+                  <Users size={12} className="inline mr-1" />
+                  Kapasitas
+                </Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={form.capacity}
+                  onChange={(e) => set("capacity", e.target.value)}
+                  placeholder="e.g. 300"
+                />
+              </div>
+            </div>
+
+            {/* ── CLIENT INFO ────────────────────────────────────────── */}
+            <SectionLabel>
+              <Building2 size={12} className="inline mr-1" />
+              Informasi Klien
+            </SectionLabel>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm mb-1.5 block">
+                  Nama Klien / Perusahaan <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   value={form.client_company}
-                  onChange={e => set("client_company", e.target.value)}
+                  onChange={(e) => set("client_company", e.target.value)}
                   placeholder="e.g. Mandiri Utama Finance"
                   required
                 />
               </div>
-              <div className="col-span-2">
-                <Label className="text-sm mb-1.5 block">PIC Klien *</Label>
+              <div>
+                <Label className="text-sm mb-1.5 block">
+                  PIC Klien <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   value={form.client_pic}
-                  onChange={e => set("client_pic", e.target.value)}
+                  onChange={(e) => set("client_pic", e.target.value)}
                   placeholder="e.g. Bapak Fajar Lazuardiana"
                   required
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-sm mb-1.5 block">Email Klien</Label>
                 <Input
                   type="email"
                   value={form.client_email}
-                  onChange={e => set("client_email", e.target.value)}
+                  onChange={(e) => set("client_email", e.target.value)}
                   placeholder="klien@perusahaan.com"
                 />
               </div>
@@ -234,21 +398,32 @@ function CreateProjectModal({ onClose }) {
                 <Label className="text-sm mb-1.5 block">Telepon</Label>
                 <Input
                   value={form.client_phone}
-                  onChange={e => set("client_phone", e.target.value)}
+                  onChange={(e) => set("client_phone", e.target.value)}
                   placeholder="+62 811 234 5678"
                 />
               </div>
             </div>
 
-            <div className="flex gap-2 pt-2">
+            {/* ── ACTIONS ────────────────────────────────────────────── */}
+            <div className="flex gap-2 pt-3 border-t border-slate-100">
               <Button
                 type="submit"
-                className="flex-1 bg-slate-900 hover:bg-slate-700"
+                className="flex-1 bg-slate-900 hover:bg-slate-700 gap-2"
                 disabled={create.isPending}
               >
-                {create.isPending ? "Membuat..." : "Buat Project"}
+                {create.isPending ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Membuat...
+                  </>
+                ) : (
+                  <>
+                    <Plus size={16} />
+                    Buat Project
+                  </>
+                )}
               </Button>
-              <Button type="button" variant="outline" onClick={onClose}>
+              <Button type="button" variant="outline" onClick={onClose} disabled={create.isPending}>
                 Batal
               </Button>
             </div>
@@ -259,14 +434,16 @@ function CreateProjectModal({ onClose }) {
   );
 }
 
+// ── Main Page ─────────────────────────────────────────────────────────────────
+
 export default function MICEProjectsPage() {
   const { data: projects = [], isLoading } = useMICEProjects();
   const [showCreate, setShowCreate] = useState(false);
 
-  const active   = projects.filter(p => p.status === "active").length;
-  const approved = projects.filter(p => p.status === "approved").length;
-  const totalRev = projects.reduce((sum, p) =>
-    sum + parseFloat(p.active_quotation?.total_after_tax ?? 0), 0
+  const active   = projects.filter((p) => p.status === "active").length;
+  const approved = projects.filter((p) => p.status === "approved").length;
+  const totalRev = projects.reduce(
+    (sum, p) => sum + parseFloat(p.active_quotation?.total_after_tax ?? 0), 0
   );
 
   return (
@@ -292,8 +469,8 @@ export default function MICEProjectsPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatCard title="Total Project" value={projects.length} icon={Building2} accent />
-        <StatCard title="Aktif" value={active} icon={TrendingUp} />
-        <StatCard title="Approval" value={approved} icon={CheckCircle2} />
+        <StatCard title="Aktif"         value={active}           icon={TrendingUp} />
+        <StatCard title="Approval"      value={approved}         icon={CheckCircle2} />
         <StatCard
           title="Total Revenue"
           value={new Intl.NumberFormat("id-ID", {
@@ -304,10 +481,10 @@ export default function MICEProjectsPage() {
         />
       </div>
 
-      {/* Loading */}
+      {/* Loading skeletons */}
       {isLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => (
+          {[1, 2, 3].map((i) => (
             <div key={i} className="h-48 rounded-xl bg-slate-100 animate-pulse" />
           ))}
         </div>
@@ -334,7 +511,7 @@ export default function MICEProjectsPage() {
       {/* Projects grid */}
       {!isLoading && projects.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {projects.map(project => (
+          {projects.map((project) => (
             <ProjectCard key={project.id} project={project} />
           ))}
         </div>
