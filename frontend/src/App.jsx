@@ -13,10 +13,12 @@ import EventsPage from "./pages/EventsPage";
 import Home from "./pages/Home";
 
 // MICE pages
-import MICEProjectsPage from "./pages/MICEProjectsPage";
-import MICEProjectDetailPage from "./pages/MICEProjectDetailPage";
-import QuotationBuilderPage from "./pages/QuotationBuilderPage";
+import AssetHubPage from "./pages/AssetHubPage";
 import ClientPortalPage from "./pages/ClientPortalPage";
+import MICEProjectDetailPage from "./pages/MICEProjectDetailPage";
+import MICEProjectsPage from "./pages/MICEProjectsPage";
+import QuotationBuilderPage from "./pages/QuotationBuilderPage";
+
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -58,6 +60,10 @@ export default function App() {
             <Route
               path="/mice/projects/:projectId"
               element={<ProtectedRoute><MICEProjectDetailPage /></ProtectedRoute>}
+            />
+            <Route
+              path="/mice/projects/:projectId/assets"
+              element={<ProtectedRoute><AssetHubPage /></ProtectedRoute>}
             />
             <Route
               path="/mice/quotation/:quotationId"
