@@ -106,6 +106,32 @@ class MICEProjectViewSet(viewsets.ModelViewSet):
             ).data,
         })
 
+# =============================================================================
+# PATCH 2: Add to apps/mice/views.py
+# Add this action INSIDE MICEProjectViewSet class, after the `dashboard` action
+# (around line 108)
+# =============================================================================
+
+    @action(detail=False, methods=['post'], url_path='create-with-event')
+    def create_with_event(self, request):
+        """
+        POST /api/v1/mice/projects/create-with-event/
+        Creates an Event + MICEProject atomically.
+        No need to create an Event first.
+        """
+        from .serializers import MICEProjectWithEventCreateSerializer
+        serializer = MICEProjectWithEventCreateSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        project = serializer.save()
+        return Response(
+            MICEProjectDetailSerializer(project, context={'request': request}).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
 
 # ── SubEvent ──────────────────────────────────────────────────────────────────
 
