@@ -5,7 +5,7 @@
 #   - Organizer serializers: full data including modal_price, margins
 #   - Client serializers: client-facing price only, margins stripped
 # =============================================================================
-
+from datetime import timedelta
 from decimal import Decimal
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
@@ -588,8 +588,8 @@ class MICEProjectWithEventCreateSerializer(serializers.Serializer):
                 status              = 'draft',
                 start_date          = validated_data['event_start_date'],
                 end_date            = validated_data['event_end_date'],
-                registration_start  = validated_data['event_start_date'],
-                registration_end    = validated_data['event_end_date'],
+                registration_start  = validated_data['event_start_date'] - timedelta(days=30),
+                registration_end    = validated_data['event_start_date'] - timedelta(days=1),
                 venue_name          = validated_data['venue_name'],
                 venue_address       = validated_data.get('venue_address', ''),
                 city                = validated_data.get('city', ''),
