@@ -2,6 +2,7 @@
 // FULL REPLACEMENT — CreateProjectModal now creates Event + MICEProject in one shot
 
 import api from "@/api/client";
+import DateTimePicker from "@/components/common/DateTimePicker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const IDR = (val) =>
@@ -287,22 +287,18 @@ function CreateProjectModal({ onClose }) {
                 <Label className="text-sm mb-1.5 block">
                   Tanggal Mulai <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  type="datetime-local"
+                <DateTimePicker
                   value={form.event_start_date}
-                  onChange={(e) => set("event_start_date", e.target.value)}
-                  required
+                  onChange={(val) => set("event_start_date", val)}
                 />
               </div>
               <div>
                 <Label className="text-sm mb-1.5 block">
                   Tanggal Selesai <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  type="datetime-local"
+                <DateTimePicker
                   value={form.event_end_date}
-                  onChange={(e) => set("event_end_date", e.target.value)}
-                  required
+                  onChange={(val) => set("event_end_date", val)}
                 />
               </div>
             </div>
